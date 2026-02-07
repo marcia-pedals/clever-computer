@@ -66,7 +66,11 @@ func main() {
 			req.Header.Set("Authorization", "token "+token)
 			req.Header.Del("X-Forwarded-For")
 
-			if strings.HasPrefix(req.URL.Path, "/api/v3/") || strings.HasPrefix(req.URL.Path, "/api/v3") {
+			// Clients (gh) treat this proxy as a GitHub Enterprise Server, which
+			// uses /api/v3/* for REST and /api/graphql for GraphQL. We strip those
+			// prefixes when forwarding to api.github.com, which serves both APIs
+			// at its root (e.g. GHES /api/v3/repos/o/r → api.github.com/repos/o/r).
+			if strings.HasPrefix(req.URL.Path, "/api/v3/") || req.URL.Path == "/api/v3" {
 				req.URL.Scheme = apiURL.Scheme
 				req.URL.Host = apiURL.Host
 				req.Host = apiURL.Host

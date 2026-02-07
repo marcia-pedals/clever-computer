@@ -50,7 +50,7 @@ EXTEOF
   ) \
   -out "$CERT_DIR/server.crt"
 
-rm -f "$CERT_DIR/server.csr" "$CERT_DIR/ca.srl"
+rm -f "$CERT_DIR/server.csr"
 
 echo "Certificates generated in $CERT_DIR/"
 echo "  CA:     $CERT_DIR/ca.crt"
