@@ -40,6 +40,7 @@ echo "$HOST_IP github.proxy" | sudo tee -a /etc/hosts > /dev/null
 echo "Configuring git identity..."
 git config --global user.name "clever-computer[bot]"
 git config --global user.email "clever-computer[bot]@users.noreply.github.com"
+git config --global --replace-all credential.helper ""
 
 echo "Configuring git to use GitHub proxy..."
 # Embed dummy credentials in the URL so git never prompts — the proxy injects the real token.
@@ -49,7 +50,7 @@ git config --global url."https://x-access-token:proxy-managed@github.proxy:8443/
 echo "Installing gh CLI..."
 # shellcheck disable=SC1091
 . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-nix profile install nixpkgs#gh
+nix profile add nixpkgs#gh
 
 # Configure gh to use the GitHub proxy (treated as a GitHub Enterprise host).
 # The proxy injects auth tokens, so the token here is a placeholder.

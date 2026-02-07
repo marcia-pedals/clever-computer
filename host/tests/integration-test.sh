@@ -3,6 +3,11 @@ set -euo pipefail
 
 VM_NAME="clever-computer"
 TEST_REPO="marcia-pedals/clever-computer-test"
+USE_EXISTING_VM=false
+
+if [[ "${1:-}" == "--use-existing-vm" ]]; then
+  USE_EXISTING_VM=true
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR/../.."
@@ -24,33 +29,36 @@ cleanup() {
     kill "$PROXY_PID" 2>/dev/null || true
     wait "$PROXY_PID" 2>/dev/null || true
   fi
-
-  if tart list 2>/dev/null | grep -q "$VM_NAME"; then
-    echo "Stopping and deleting VM '$VM_NAME'..."
-    tart stop "$VM_NAME" 2>/dev/null || true
-    tart delete "$VM_NAME" 2>/dev/null || true
-  fi
 }
 
 trap cleanup EXIT
 
-# --- Cleanup any pre-existing state ---
-echo "=== Pre-flight cleanup ==="
-if tart list 2>/dev/null | grep -q "$VM_NAME"; then
-  echo "Removing existing VM '$VM_NAME'..."
-  tart stop "$VM_NAME" 2>/dev/null || true
-  tart delete "$VM_NAME" 2>/dev/null || true
-fi
+if [[ "$USE_EXISTING_VM" == true ]]; then
+  echo "=== Using existing VM ==="
+  VM_IP=$(tart ip "$VM_NAME")
+  echo "VM IP: $VM_IP"
+else
+  # --- Cleanup any pre-existing state ---
+  echo "=== Pre-flight cleanup ==="
+  if tart list 2>/dev/null | grep -q "$VM_NAME"; then
+    echo "Removing existing VM '$VM_NAME'..."
+    tart stop "$VM_NAME" 2>/dev/null || true
+    tart delete "$VM_NAME" 2>/dev/null || true
+  fi
 
-if [[ -d "$CERT_DIR" ]]; then
-  echo "Removing existing certificates..."
-  rm -rf "$CERT_DIR"
-fi
+  if [[ -d "$CERT_DIR" ]]; then
+    echo "Removing existing certificates..."
+    rm -rf "$CERT_DIR"
+  fi
 
-# --- Generate fresh certificates ---
-echo ""
-echo "=== Generating certificates ==="
-"$PROXY_DIR/generate-certs.sh" "$CERT_DIR"
+  # --- Provision the VM (generates certs if needed) ---
+  echo ""
+  echo "=== Setting up VM ==="
+  "$SETUP_VM" ~/.ssh/id_ed25519.pub
+
+  VM_IP=$(tart ip "$VM_NAME")
+  echo "VM IP: $VM_IP"
+fi
 
 # --- Start the GitHub proxy ---
 echo ""
@@ -68,14 +76,6 @@ if ! kill -0 "$PROXY_PID" 2>/dev/null; then
   exit 1
 fi
 echo "GitHub proxy running (PID $PROXY_PID)"
-
-# --- Provision the VM ---
-echo ""
-echo "=== Setting up VM ==="
-"$SETUP_VM" ~/.ssh/id_ed25519.pub
-
-VM_IP=$(tart ip "$VM_NAME")
-echo "VM IP: $VM_IP"
 
 # --- Copy and run the sandbox test ---
 echo ""
