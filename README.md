@@ -13,7 +13,7 @@ The sandboxing idea is:
 * Mount a host directory RW on the VM where all the coding happens.
 
 * Don't put any credentials on the VM so that the AI can't do any destructive
-  actions on private resources.
+  actions on private resources, and can't even leak credentials.
 
 * Give the VM capabilities to perform specific safer actions on private
   resources, e.g. create/read/update PRs on a GitHub repo. But not e.g. push to
