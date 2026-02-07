@@ -1,0 +1,9 @@
+[github]
+app_id =
+installation_id =
+private_key_path =
+
+[server]
+listen_addr = ":8443"
+tls_cert_path = "./certs/server.crt"
+tls_key_path = "./certs/server.key"

@@ -20,6 +20,15 @@ fi
 
 echo "Using SSH public key: $SSH_PUB_KEY"
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SANDBOX_SCRIPT="$SCRIPT_DIR/../../sandbox/setup-vm/provision.sh"
+CA_CERT="$SCRIPT_DIR/../github-proxy/certs/ca.crt"
+
+if [[ ! -f "$CA_CERT" ]]; then
+  echo "Certificates not found, generating..."
+  "$SCRIPT_DIR/../github-proxy/generate-certs.sh" "$SCRIPT_DIR/../github-proxy/certs"
+fi
+
 # Pull the image if not already present
 if ! tart list | grep -q "$IMAGE"; then
   echo "Pulling $IMAGE..."
@@ -76,10 +85,12 @@ sshpass -p "$DEFAULT_PASS" ssh "$DEFAULT_USER@$VM_IP" \
   "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '$PUB_KEY_CONTENT' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
 
 # Copy and run the sandbox setup script
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SANDBOX_SCRIPT="$SCRIPT_DIR/../../sandbox/setup-vm/provision.sh"
 echo "Copying sandbox setup script to VM..."
 scp "$SANDBOX_SCRIPT" "$DEFAULT_USER@$VM_IP:/tmp/setup-vm.sh"
+
+echo "Copying CA certificate to VM..."
+scp "$CA_CERT" "$DEFAULT_USER@$VM_IP:/tmp/github-proxy-ca.crt"
+
 echo "Running sandbox setup script..."
 # We intentionally expand $VM_NAME client-side
 # shellcheck disable=SC2029

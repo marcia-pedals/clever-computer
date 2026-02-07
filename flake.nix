@@ -28,6 +28,12 @@
           shellcheck = {
             enable = true;
           };
+          govet = {
+            enable = true;
+          };
+          gofmt = {
+            enable = true;
+          };
         };
       };
     in
@@ -37,6 +43,7 @@
       devShells.${system}.default = pkgs.mkShell {
         inherit (pre-commit) shellHook;
         packages = [
+          pkgs.go
           pkgs.tart
           pkgs.softnet
           pkgs.sshpass
