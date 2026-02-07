@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+VM_NAME="clever-computer"
+IMAGE="ghcr.io/cirruslabs/macos-sequoia-base:latest"
+DEFAULT_USER="admin"
+DEFAULT_PASS="admin"
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: $0 <path-to-ssh-public-key>"
+  exit 1
+fi
+
+SSH_PUB_KEY="$1"
+
+if [[ ! -f "$SSH_PUB_KEY" ]]; then
+  echo "Error: File not found: $SSH_PUB_KEY"
+  exit 1
+fi
+
+echo "Using SSH public key: $SSH_PUB_KEY"
+
+# Pull the image if not already present
+if ! tart list | grep -q "$IMAGE"; then
+  echo "Pulling $IMAGE..."
+  tart pull "$IMAGE"
+else
+  echo "Image $IMAGE already present."
+fi
+
+# Clone the VM if it doesn't already exist
+if tart list | grep -q "$VM_NAME"; then
+  echo "VM '$VM_NAME' already exists."
+else
+  echo "Cloning $IMAGE as $VM_NAME..."
+  tart clone "$IMAGE" "$VM_NAME"
+fi
+
+# Start the VM headless in the background
+echo "Starting VM '$VM_NAME' headless..."
+tart run "$VM_NAME" --no-graphics --net-softnet &
+TART_PID=$!
+
+# Wait for the VM to boot and get its IP
+echo "Waiting for VM to boot..."
+VM_IP=""
+for i in $(seq 1 60); do
+  VM_IP=$(tart ip "$VM_NAME" 2>/dev/null || true)
+  if [[ -n "$VM_IP" ]]; then
+    break
+  fi
+  sleep 5
+done
+
+if [[ -z "$VM_IP" ]]; then
+  echo "Error: Timed out waiting for VM IP."
+  kill "$TART_PID" 2>/dev/null || true
+  exit 1
+fi
+
+echo "VM is up at $VM_IP"
+
+# Wait a bit more for SSH to be ready
+echo "Waiting for SSH to become available..."
+for i in $(seq 1 30); do
+  if sshpass -p "$DEFAULT_PASS" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "$DEFAULT_USER@$VM_IP" "echo ok" &>/dev/null; then
+    break
+  fi
+  sleep 2
+done
+
+# Inject the SSH public key
+echo "Injecting SSH public key..."
+PUB_KEY_CONTENT=$(cat "$SSH_PUB_KEY")
+sshpass -p "$DEFAULT_PASS" ssh -o StrictHostKeyChecking=no "$DEFAULT_USER@$VM_IP" \
+  "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '$PUB_KEY_CONTENT' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+
+echo ""
+echo "VM '$VM_NAME' is running at $VM_IP (PID: $TART_PID)"
+echo "Connect with:"
+echo "  ssh $DEFAULT_USER@$VM_IP"
