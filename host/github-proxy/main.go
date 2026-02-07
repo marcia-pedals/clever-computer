@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -63,7 +64,10 @@ func main() {
 				return
 			}
 
-			req.Header.Set("Authorization", "token "+token)
+			// Use Basic auth with x-access-token — required for git HTTP transport,
+			// and also accepted by the REST and GraphQL APIs.
+			basicAuth := base64.StdEncoding.EncodeToString([]byte("x-access-token:" + token))
+			req.Header.Set("Authorization", "Basic "+basicAuth)
 			req.Header.Del("X-Forwarded-For")
 
 			// Clients (gh) treat this proxy as a GitHub Enterprise Server, which

@@ -37,8 +37,13 @@ HOST_IP=$(route -n get default | awk '/gateway:/ {print $2}')
 echo "Adding github.proxy → $HOST_IP to /etc/hosts..."
 echo "$HOST_IP github.proxy" | sudo tee -a /etc/hosts > /dev/null
 
+echo "Configuring git identity..."
+git config --global user.name "clever-computer[bot]"
+git config --global user.email "clever-computer[bot]@users.noreply.github.com"
+
 echo "Configuring git to use GitHub proxy..."
-git config --global url."https://github.proxy:8443/".insteadOf "https://github.com/"
+# Embed dummy credentials in the URL so git never prompts — the proxy injects the real token.
+git config --global url."https://x-access-token:proxy-managed@github.proxy:8443/".insteadOf "https://github.com/"
 
 # Install gh CLI via Nix
 echo "Installing gh CLI..."
