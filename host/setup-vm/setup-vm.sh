@@ -44,7 +44,7 @@ TART_PID=$!
 # Wait for the VM to boot and get its IP
 echo "Waiting for VM to boot..."
 VM_IP=""
-for i in $(seq 1 60); do
+for _i in $(seq 1 60); do
   VM_IP=$(tart ip "$VM_NAME" 2>/dev/null || true)
   if [[ -n "$VM_IP" ]]; then
     break
@@ -62,7 +62,7 @@ echo "VM is up at $VM_IP"
 
 # Wait a bit more for SSH to be ready
 echo "Waiting for SSH to become available..."
-for i in $(seq 1 30); do
+for _i in $(seq 1 30); do
   if sshpass -p "$DEFAULT_PASS" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "$DEFAULT_USER@$VM_IP" "echo ok" &>/dev/null; then
     break
   fi
