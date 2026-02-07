@@ -8,7 +8,10 @@
   outputs = { self, nixpkgs }:
     let
       system = "aarch64-darwin";
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
     in
     {
       devShells.${system}.default = pkgs.mkShell {

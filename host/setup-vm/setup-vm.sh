@@ -73,7 +73,7 @@ done
 echo "Injecting SSH public key..."
 PUB_KEY_CONTENT=$(cat "$SSH_PUB_KEY")
 sshpass -p "$DEFAULT_PASS" ssh -o StrictHostKeyChecking=no "$DEFAULT_USER@$VM_IP" \
-  "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '$PUB_KEY_CONTENT' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+  "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '$PUB_KEY_CONTENT' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && sudo scutil --set HostName $VM_NAME && sudo scutil --set LocalHostName $VM_NAME && sudo scutil --set ComputerName $VM_NAME"
 
 echo ""
 echo "VM '$VM_NAME' is running at $VM_IP (PID: $TART_PID)"
