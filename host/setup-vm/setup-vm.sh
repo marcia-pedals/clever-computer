@@ -72,8 +72,18 @@ done
 # Inject the SSH public key
 echo "Injecting SSH public key..."
 PUB_KEY_CONTENT=$(cat "$SSH_PUB_KEY")
-sshpass -p "$DEFAULT_PASS" ssh -o StrictHostKeyChecking=no "$DEFAULT_USER@$VM_IP" \
-  "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '$PUB_KEY_CONTENT' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && sudo scutil --set HostName $VM_NAME && sudo scutil --set LocalHostName $VM_NAME && sudo scutil --set ComputerName $VM_NAME"
+sshpass -p "$DEFAULT_PASS" ssh "$DEFAULT_USER@$VM_IP" \
+  "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '$PUB_KEY_CONTENT' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+
+# Copy and run the sandbox setup script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SANDBOX_SCRIPT="$SCRIPT_DIR/../../sandbox/setup-vm/provision.sh"
+echo "Copying sandbox setup script to VM..."
+scp "$SANDBOX_SCRIPT" "$DEFAULT_USER@$VM_IP:/tmp/setup-vm.sh"
+echo "Running sandbox setup script..."
+# We intentionally expand $VM_NAME client-side
+# shellcheck disable=SC2029
+ssh "$DEFAULT_USER@$VM_IP" "bash /tmp/setup-vm.sh $VM_NAME"
 
 echo ""
 echo "VM '$VM_NAME' is running at $VM_IP (PID: $TART_PID)"
