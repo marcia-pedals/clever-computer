@@ -6,21 +6,31 @@ IMAGE="ghcr.io/cirruslabs/macos-sequoia-base:latest"
 DEFAULT_USER="admin"
 DEFAULT_PASS="admin"
 
-if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <path-to-ssh-public-key>"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+CONFIG_FILE="$SCRIPT_DIR/config.sh"
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  echo "Error: Config file not found: $CONFIG_FILE"
+  echo "Copy config.sh.template to config.sh and fill in your SSH public key path."
   exit 1
 fi
 
-SSH_PUB_KEY="$1"
+# shellcheck source=/dev/null
+source "$CONFIG_FILE"
+
+SSH_PUB_KEY="$SSH_PUBLIC_KEY_PATH"
+
+if [[ -z "$SSH_PUB_KEY" ]]; then
+  echo "Error: SSH_PUBLIC_KEY_PATH is not set in $CONFIG_FILE"
+  exit 1
+fi
 
 if [[ ! -f "$SSH_PUB_KEY" ]]; then
-  echo "Error: File not found: $SSH_PUB_KEY"
+  echo "Error: SSH public key file not found: $SSH_PUB_KEY"
   exit 1
 fi
 
 echo "Using SSH public key: $SSH_PUB_KEY"
-
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SANDBOX_SCRIPT="$SCRIPT_DIR/../../sandbox/setup-vm/provision.sh"
 CA_CERT="$SCRIPT_DIR/../github-proxy/certs/ca.crt"
 

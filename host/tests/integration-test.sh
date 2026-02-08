@@ -54,7 +54,7 @@ else
   # --- Provision the VM (generates certs if needed) ---
   echo ""
   echo "=== Setting up VM ==="
-  "$SETUP_VM" ~/.ssh/id_ed25519.pub
+  "$SETUP_VM"
 
   VM_IP=$(tart ip "$VM_NAME")
   echo "VM IP: $VM_IP"
