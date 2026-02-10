@@ -52,6 +52,17 @@ echo "Installing gh CLI..."
 . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 nix profile add nixpkgs#gh
 
+# Install Node.js and Claude Code
+echo "Installing Node.js..."
+nix profile add nixpkgs#nodejs
+echo "Installing Claude Code..."
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+# shellcheck disable=SC2016
+echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshenv
+export PATH="$HOME/.npm-global/bin:$PATH"
+npm install -g @anthropic-ai/claude-code
+
 # Configure gh to use the GitHub proxy (treated as a GitHub Enterprise host).
 # The proxy injects auth tokens, so the token here is a placeholder.
 echo "Configuring gh to use GitHub proxy..."
