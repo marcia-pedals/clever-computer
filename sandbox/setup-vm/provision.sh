@@ -28,9 +28,13 @@ if [[ ! -f /tmp/github-proxy-ca.crt ]]; then
   exit 1
 fi
 
+# Copy the CA cert to a persistent location (out of /tmp).
+sudo mkdir -p /usr/local/share/ca-certificates
+sudo cp /tmp/github-proxy-ca.crt /usr/local/share/ca-certificates/github-proxy-ca.crt
+
 echo "Installing GitHub proxy CA certificate..."
 sudo security add-trusted-cert -d -r trustRoot \
-  -k /Library/Keychains/System.keychain /tmp/github-proxy-ca.crt
+  -k /Library/Keychains/System.keychain /usr/local/share/ca-certificates/github-proxy-ca.crt
 
 # The host IP is the default gateway on the softnet VM network
 HOST_IP=$(route -n get default | awk '/gateway:/ {print $2}')
@@ -44,7 +48,8 @@ git config --global --replace-all credential.helper ""
 
 echo "Configuring git to use GitHub proxy..."
 # Embed dummy credentials in the URL so git never prompts — the proxy injects the real token.
-git config --global url."https://x-access-token:proxy-managed@github.proxy:8443/".insteadOf "https://github.com/"
+git config --global url."https://x-access-token:proxy-managed@github.proxy:8443/".insteadOf "https://github.proxy:8443/"
+git config --global http."https://github.proxy:8443".sslCAInfo /usr/local/share/ca-certificates/github-proxy-ca.crt
 
 # Install gh CLI via Nix
 echo "Installing gh CLI..."

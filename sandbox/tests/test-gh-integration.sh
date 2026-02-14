@@ -30,7 +30,7 @@ echo "Closed issue #$ISSUE_NUMBER"
 
 echo ""
 echo "=== Test: git clone ==="
-git clone "https://github.com/$REPO.git" "$CLONE_DIR"
+git clone "https://github.proxy:8443/$REPO.git" "$CLONE_DIR"
 echo "Cloned $REPO"
 
 echo ""

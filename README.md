@@ -54,3 +54,27 @@ reconstructs the data.
 
 I guess we could close the hole even better by having private mirrors of
 everything that the AI needs.
+
+## Workflows and VM configs
+
+Configs
+Install tmux.
+Alias claude dangerously skip permissions.
+Install direnv.
+Install clang-lsp (and other required thingies?) in claude.
+Scope the github proxy to only operate on things that we need private access to.
+
+Is there some kind of dotfiles sharing thingy I can use to share my tmux/zsh/etc configs between host and vm?
+
+Clone repo (and pre-build immediately for faster build).
+Start/attach to per-clone claude?
+
+Figure out how to get LSP working in Zed-remote.
+
+Ok here is how I think it is going to work.
+
+- A "workspace" is a checkout of a repo along with some other stuff that I'll describe soon.
+- There is a script that makes it really easy to create a new workspace.
+- A workspace has its own tmux session. All workspace related scripts, commands, etc are to be run in this.
+- Each workspace has one autonomous loop that receives commands from me and also watches PRs associated with that workspace for reviews and addresses them.
+- There is a command for listing all workspaces and the states of their autonomous loops.
