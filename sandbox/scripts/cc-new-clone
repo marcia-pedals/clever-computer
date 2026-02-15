@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SUFFIXES=(
+  apple apricot artichoke arugula asparagus avocado
+  banana basil beet blueberry broccoli
+  cabbage carrot cauliflower celery cherry cilantro coconut corn cranberry cucumber
+  date dill
+  eggplant endive
+  fennel fig
+  garlic ginger grape grapefruit guava
+  honeydew
+  jalapeno jicama
+  kale kiwi kohlrabi kumquat
+  leek lemon lettuce lime lychee
+  mango melon mint mushroom
+  nectarine nutmeg
+  okra olive onion orange oregano
+  papaya parsley parsnip peach pear pepper persimmon pineapple plum pomegranate potato pumpkin
+  quince
+  radish raspberry rhubarb rosemary rutabaga
+  sage shallot spinach squash strawberry
+  tangerine thyme tomato turnip
+  watermelon
+  yam
+  zucchini
+)
+
+mkdir -p ~/checkouts
+
+# Collect existing suffixes
+existing=()
+for dir in ~/checkouts/vats5-*/; do
+  [ -d "$dir" ] || continue
+  name="$(basename "$dir")"
+  existing+=("${name#vats5-}")
+done
+
+# Filter to available suffixes
+available=()
+for s in "${SUFFIXES[@]}"; do
+  match=false
+  for e in "${existing[@]+"${existing[@]}"}"; do
+    if [ "$s" = "$e" ]; then
+      match=true
+      break
+    fi
+  done
+  if ! $match; then
+    available+=("$s")
+  fi
+done
+
+if [ ${#available[@]} -eq 0 ]; then
+  echo "Error: no available suffix names left" >&2
+  exit 1
+fi
+
+# Pick a random suffix
+suffix="${available[$((RANDOM % ${#available[@]}))]}"
+dest=~/checkouts/vats5-"$suffix"
+
+echo "Cloning into $dest ..."
+git clone https://github.proxy:8443/marcia-pedals/vats5.git "$dest"

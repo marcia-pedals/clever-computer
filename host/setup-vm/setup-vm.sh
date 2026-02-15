@@ -32,6 +32,7 @@ fi
 
 echo "Using SSH public key: $SSH_PUB_KEY"
 SANDBOX_SCRIPT="$SCRIPT_DIR/../../sandbox/setup-vm/provision.sh"
+SANDBOX_SCRIPTS_DIR="$SCRIPT_DIR/../../sandbox/scripts"
 CA_CERT="$SCRIPT_DIR/../github-proxy/certs/ca.crt"
 
 if [[ ! -f "$CA_CERT" ]]; then
@@ -100,6 +101,10 @@ scp "$SANDBOX_SCRIPT" "$DEFAULT_USER@$VM_IP:/tmp/setup-vm.sh"
 
 echo "Copying CA certificate to VM..."
 scp "$CA_CERT" "$DEFAULT_USER@$VM_IP:/tmp/github-proxy-ca.crt"
+
+echo "Copying scripts to VM..."
+ssh "$DEFAULT_USER@$VM_IP" "mkdir -p ~/scripts"
+scp -r "$SANDBOX_SCRIPTS_DIR"/* "$DEFAULT_USER@$VM_IP:~/scripts/"
 
 echo "Running sandbox setup script..."
 # We intentionally expand $VM_NAME client-side

@@ -18,6 +18,10 @@ sudo scutil --set ComputerName "$HOSTNAME"
 echo "Configuring environment variables..."
 echo 'export EXAMPLE_ENV=hello-world' >> ~/.zshenv
 
+# Add ~/scripts to PATH
+# shellcheck disable=SC2016
+echo 'export PATH="$HOME/scripts:$PATH"' >> ~/.zshenv
+
 # Install Nix
 echo "Installing Nix..."
 curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install --no-confirm
@@ -51,27 +55,32 @@ echo "Configuring git to use GitHub proxy..."
 git config --global url."https://x-access-token:proxy-managed@github.proxy:8443/".insteadOf "https://github.proxy:8443/"
 git config --global http."https://github.proxy:8443".sslCAInfo /usr/local/share/ca-certificates/github-proxy-ca.crt
 
+# Install Claude Code
+curl -fsSL https://claude.ai/install.sh | bash
+echo "alias claude='claude --dangerously-skip-permissions'" >> ~/.zshrc
+
 # Install gh CLI via Nix
 echo "Installing gh CLI..."
 # shellcheck disable=SC1091
 . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 nix profile add nixpkgs#gh
 
-# Install Node.js and Claude Code
-echo "Installing Node.js..."
-nix profile add nixpkgs#nodejs
-echo "Installing Claude Code..."
-mkdir -p ~/.npm-global
-npm config set prefix ~/.npm-global
-# shellcheck disable=SC2016
-echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshenv
-export PATH="$HOME/.npm-global/bin:$PATH"
-npm install -g @anthropic-ai/claude-code
-
 # Configure gh to use the GitHub proxy (treated as a GitHub Enterprise host).
 # The proxy injects auth tokens, so the token here is a placeholder.
 echo "Configuring gh to use GitHub proxy..."
+mkdir -p ~/.config/gh
+cat > ~/.config/gh/hosts.yml << 'EOF'
+github.proxy:8443:
+    oauth_token: proxy-managed
+    git_protocol: https
+EOF
 cat >> ~/.zshenv << 'EOF'
 export GH_HOST=github.proxy:8443
-export GH_ENTERPRISE_TOKEN=proxy-managed
+EOF
+
+# Install direnv
+echo "Installing direnv..."
+nix profile add nixpkgs#direnv
+cat >> ~/.zshrc << 'EOF'
+eval "$(direnv hook zsh)"
 EOF

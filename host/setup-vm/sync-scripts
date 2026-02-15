@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Syncs sandbox/scripts onto the VM at ~/scripts and ensures ~/scripts is on PATH.
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPTS_DIR="$SCRIPT_DIR/../../sandbox/scripts"
+VM_NAME="clever-computer"
+DEFAULT_USER="admin"
+
+VM_IP=$(tart ip "$VM_NAME" 2>/dev/null || true)
+if [[ -z "$VM_IP" ]]; then
+  echo "Error: Could not get IP for VM '$VM_NAME'. Is it running?"
+  exit 1
+fi
+
+echo "Syncing scripts to $DEFAULT_USER@$VM_IP..."
+ssh "$DEFAULT_USER@$VM_IP" "mkdir -p ~/scripts"
+scp -r "$SCRIPTS_DIR"/* "$DEFAULT_USER@$VM_IP:~/scripts/"
+echo "Done."
