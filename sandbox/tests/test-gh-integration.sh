@@ -18,24 +18,25 @@ cleanup() {
 }
 trap cleanup EXIT
 
+echo "=== Test: git clone ==="
+git clone "https://github.proxy/$REPO.git" "$CLONE_DIR"
+echo "Cloned $REPO"
+
+cd "$CLONE_DIR"
+
+echo ""
 echo "=== Test: gh issue create ==="
-ISSUE_URL=$(gh issue create --repo "$REPO" --title "Integration test $BRANCH" --body "Automated integration test." | tail -1)
+ISSUE_URL=$(gh issue create --title "Integration test $BRANCH" --body "Automated integration test." | tail -1)
 ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -oE '[0-9]+$')
 echo "Created issue #$ISSUE_NUMBER"
 
 echo ""
 echo "=== Test: gh issue close ==="
-gh issue close "$ISSUE_NUMBER" --repo "$REPO"
+gh issue close "$ISSUE_NUMBER"
 echo "Closed issue #$ISSUE_NUMBER"
 
 echo ""
-echo "=== Test: git clone ==="
-git clone "https://github.proxy:8443/$REPO.git" "$CLONE_DIR"
-echo "Cloned $REPO"
-
-echo ""
 echo "=== Test: git push branch ==="
-cd "$CLONE_DIR"
 git checkout -b "$BRANCH"
 echo "integration test $BRANCH" > integration-test.txt
 git add integration-test.txt
@@ -45,13 +46,13 @@ echo "Pushed branch $BRANCH"
 
 echo ""
 echo "=== Test: gh pr create ==="
-PR_URL=$(gh pr create --repo "$REPO" --title "Integration test $BRANCH" --body "Automated integration test." --head "$BRANCH" | tail -1)
+PR_URL=$(gh pr create --title "Integration test $BRANCH" --body "Automated integration test." --head "$BRANCH" | tail -1)
 PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
 echo "Created PR #$PR_NUMBER ($PR_URL)"
 
 echo ""
 echo "=== Test: gh pr merge ==="
-gh pr merge "$PR_NUMBER" --repo "$REPO" --merge --delete-branch
+gh pr merge "$PR_NUMBER" --merge --delete-branch
 echo "Merged and deleted branch"
 
 echo ""

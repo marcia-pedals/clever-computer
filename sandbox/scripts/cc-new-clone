@@ -61,4 +61,4 @@ suffix="${available[$((RANDOM % ${#available[@]}))]}"
 dest=~/checkouts/vats5-"$suffix"
 
 echo "Cloning into $dest ..."
-git clone https://github.proxy:8443/marcia-pedals/vats5.git "$dest"
+git clone https://github.proxy/marcia-pedals/vats5.git "$dest"

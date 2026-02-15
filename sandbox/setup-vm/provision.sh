@@ -40,10 +40,11 @@ echo "Installing GitHub proxy CA certificate..."
 sudo security add-trusted-cert -d -r trustRoot \
   -k /Library/Keychains/System.keychain /usr/local/share/ca-certificates/github-proxy-ca.crt
 
-# The host IP is the default gateway on the softnet VM network
+# The host IP is the default gateway on the softnet VM network.
+# github.proxy resolves to localhost; socat forwards 443 → host:8443.
 HOST_IP=$(route -n get default | awk '/gateway:/ {print $2}')
-echo "Adding github.proxy → $HOST_IP to /etc/hosts..."
-echo "$HOST_IP github.proxy" | sudo tee -a /etc/hosts > /dev/null
+echo "Adding github.proxy → 127.0.0.1 to /etc/hosts..."
+echo "127.0.0.1 github.proxy" | sudo tee -a /etc/hosts > /dev/null
 
 echo "Configuring git identity..."
 git config --global user.name "clever-computer[bot]"
@@ -52,31 +53,52 @@ git config --global --replace-all credential.helper ""
 
 echo "Configuring git to use GitHub proxy..."
 # Embed dummy credentials in the URL so git never prompts — the proxy injects the real token.
-git config --global url."https://x-access-token:proxy-managed@github.proxy:8443/".insteadOf "https://github.proxy:8443/"
-git config --global http."https://github.proxy:8443".sslCAInfo /usr/local/share/ca-certificates/github-proxy-ca.crt
+git config --global url."https://x-access-token:proxy-managed@github.proxy/".insteadOf "https://github.proxy/"
+git config --global http."https://github.proxy".sslCAInfo /usr/local/share/ca-certificates/github-proxy-ca.crt
 
 # Install Claude Code
 curl -fsSL https://claude.ai/install.sh | bash
 echo "alias claude='claude --dangerously-skip-permissions'" >> ~/.zshrc
 
-# Install gh CLI via Nix
-echo "Installing gh CLI..."
+# Install gh CLI and socat via Nix
+echo "Installing gh CLI and socat..."
 # shellcheck disable=SC1091
 . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-nix profile add nixpkgs#gh
+nix profile add nixpkgs#gh nixpkgs#socat
 
 # Configure gh to use the GitHub proxy (treated as a GitHub Enterprise host).
 # The proxy injects auth tokens, so the token here is a placeholder.
 echo "Configuring gh to use GitHub proxy..."
-mkdir -p ~/.config/gh
-cat > ~/.config/gh/hosts.yml << 'EOF'
-github.proxy:8443:
-    oauth_token: proxy-managed
-    git_protocol: https
-EOF
 cat >> ~/.zshenv << 'EOF'
-export GH_HOST=github.proxy:8443
+export GH_HOST=github.proxy
 EOF
+
+# Port-forward github.proxy:443 → host:8443 so gh CLI works (gh doesn't
+# support non-standard ports). Runs as a system-level launchd daemon so it
+# survives across login sessions and starts on boot.
+echo "Setting up port forward (443 → $HOST_IP:8443)..."
+SOCAT_PATH=$(which socat)
+sudo tee /Library/LaunchDaemons/com.clever-computer.github-proxy-forward.plist > /dev/null << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.clever-computer.github-proxy-forward</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$SOCAT_PATH</string>
+        <string>TCP-LISTEN:443,fork,reuseaddr</string>
+        <string>TCP:$HOST_IP:8443</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>
+EOF
+sudo launchctl load /Library/LaunchDaemons/com.clever-computer.github-proxy-forward.plist
 
 # Install direnv
 echo "Installing direnv..."
