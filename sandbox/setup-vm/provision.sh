@@ -59,6 +59,8 @@ git config --global http."https://github.proxy".sslCAInfo /usr/local/share/ca-ce
 # Install Claude Code
 curl -fsSL https://claude.ai/install.sh | bash
 echo "alias claude='claude --dangerously-skip-permissions'" >> ~/.zshrc
+# shellcheck disable=SC2016
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 
 # Install gh CLI and socat via Nix
 echo "Installing gh CLI and socat..."
