@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pushes the Home Manager config and scripts to the VM and applies the config.
+# Run this after editing sandbox/home/flake.nix or sandbox/scripts/ —
+# no full reprovision needed.
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+HOME_CONFIG_DIR="$SCRIPT_DIR/../../sandbox/home"
+SCRIPTS_DIR="$SCRIPT_DIR/../../sandbox/scripts"
+VM_NAME="clever-computer"
+DEFAULT_USER="admin"
+
+VM_IP=$(tart ip "$VM_NAME" 2>/dev/null || true)
+if [[ -z "$VM_IP" ]]; then
+  echo "Error: Could not get IP for VM '$VM_NAME'. Is it running?"
+  exit 1
+fi
+
+echo "Syncing home-manager config to $DEFAULT_USER@$VM_IP..."
+ssh "$DEFAULT_USER@$VM_IP" "mkdir -p ~/home-config"
+scp -r "$HOME_CONFIG_DIR"/* "$DEFAULT_USER@$VM_IP:~/home-config/"
+
+echo "Syncing scripts to $DEFAULT_USER@$VM_IP..."
+ssh "$DEFAULT_USER@$VM_IP" "mkdir -p ~/scripts"
+scp -r "$SCRIPTS_DIR"/* "$DEFAULT_USER@$VM_IP:~/scripts/"
+
+echo "Applying Home Manager configuration..."
+ssh "$DEFAULT_USER@$VM_IP" "nix run home-manager -- switch --flake ~/home-config"
+
+echo "Done."
