@@ -26,6 +26,7 @@
             # Packages (replaces nix profile add)
             home.packages = with pkgs; [
               gh
+              jq
               socat
               direnv
             ];
@@ -63,6 +64,23 @@
                 eval "$(direnv hook zsh)"
               '';
             };
+
+            home.activation.claudeOnboarding = home-manager.lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+              [ -f ~/.claude.json ] || echo '{}' > ~/.claude.json
+              ${pkgs.jq}/bin/jq '.hasCompletedOnboarding = true | .theme = "light" |.bypassPermissionsModeAccepted = true' ~/.claude.json > /tmp/.claude.json \
+                && mv /tmp/.claude.json ~/.claude.json
+            '';
+
+            home.activation.claudeSettings = home-manager.lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+              mkdir -p ~/.claude
+              [ -f ~/.claude/settings.json ] || echo '{}' > ~/.claude/settings.json
+              ${pkgs.jq}/bin/jq '
+                .enabledPlugins["clangd-lsp@claude-plugins-official"] = true |
+                .enabledPlugins["swift-lsp@claude-plugins-official"] = true |
+                .enabledPlugins["typescript-lsp@claude-plugins-official"] = true
+              ' ~/.claude/settings.json > /tmp/.claude-settings.json \
+                && mv /tmp/.claude-settings.json ~/.claude/settings.json
+            '';
 
             programs.home-manager.enable = true;
           }

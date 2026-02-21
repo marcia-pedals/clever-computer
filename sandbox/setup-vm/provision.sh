@@ -75,9 +75,7 @@ sudo launchctl load /Library/LaunchDaemons/com.clever-computer.github-proxy-forw
 echo "Installing Claude Code..."
 curl -fsSL https://claude.ai/install.sh | bash
 
-# Apply declarative user config via Home Manager.
 # Remove the base image's default ~/.gitconfig so it doesn't shadow the
 # Home Manager config at ~/.config/git/config (git prefers ~/.gitconfig).
+# The actual Home Manager apply happens via apply-config, called by the host.
 rm -f ~/.gitconfig
-echo "Applying Home Manager configuration..."
-nix run home-manager -- switch --flake ~/home-config
