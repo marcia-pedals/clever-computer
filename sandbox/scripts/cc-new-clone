@@ -62,3 +62,9 @@ dest=~/checkouts/vats5-"$suffix"
 
 echo "Cloning into $dest ..."
 git clone https://github.proxy/marcia-pedals/vats5.git "$dest"
+
+echo "Allowing direnv in $dest ..."
+direnv allow "$dest"
+
+echo "Building flake dev shell and running make-build ..."
+direnv exec "$dest" "$dest"/server/make-build

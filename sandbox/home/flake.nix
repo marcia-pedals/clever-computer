@@ -33,9 +33,9 @@
             # Git config
             programs.git = {
               enable = true;
-              userName = "clever-computer[bot]";
-              userEmail = "clever-computer[bot]@users.noreply.github.com";
-              extraConfig = {
+              settings = {
+                user.name = "clever-computer[bot]";
+                user.email = "clever-computer[bot]@users.noreply.github.com";
                 credential.helper = "";
                 url."https://x-access-token:proxy-managed@github.proxy/".insteadOf = "https://github.proxy/";
                 http."https://github.proxy".sslCAInfo = "/usr/local/share/ca-certificates/github-proxy-ca.crt";
@@ -52,14 +52,13 @@
 
               sessionVariables = {
                 GH_HOST = "github.proxy";
-                EXAMPLE_ENV = "hello-world";
               };
 
               envExtra = ''
                 export PATH="$HOME/scripts:$HOME/.local/bin:$PATH"
               '';
 
-              initExtra = ''
+              initContent = ''
                 eval "$(direnv hook zsh)"
               '';
             };

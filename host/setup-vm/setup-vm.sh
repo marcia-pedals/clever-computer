@@ -2,7 +2,7 @@
 set -euo pipefail
 
 VM_NAME="clever-computer"
-IMAGE="ghcr.io/cirruslabs/macos-sequoia-base:latest"
+IMAGE="ghcr.io/cirruslabs/macos-sequoia-xcode:latest"
 DEFAULT_USER="admin"
 DEFAULT_PASS="admin"
 
