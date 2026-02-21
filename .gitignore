@@ -4,3 +4,4 @@ result
 certs/
 config.toml
 config.sh
+secrets.env

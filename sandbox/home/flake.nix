@@ -56,6 +56,7 @@
 
               envExtra = ''
                 export PATH="$HOME/scripts:$HOME/.local/bin:$PATH"
+                [ -f ~/home-config/secrets.env ] && source ~/home-config/secrets.env
               '';
 
               initContent = ''
