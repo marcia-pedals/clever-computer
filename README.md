@@ -55,6 +55,42 @@ reconstructs the data.
 I guess we could close the hole even better by having private mirrors of
 everything that the AI needs.
 
+## Troubleshooting
+
+### VM can't reach `github.proxy`
+
+The proxy chain is: VM resolves `github.proxy` to `127.0.0.1` via `/etc/hosts`, socat on the VM forwards port 443 to the host's port 8443, and the Go proxy on the host handles the request.
+
+**1. Check the socat forwarder on the VM:**
+
+```bash
+ssh admin@<VM_IP> "sudo launchctl list | grep github-proxy"
+```
+
+Output format is `PID  Status  Label`. If PID is `-`, socat has exited. The Status column is the last exit code.
+
+To restart it:
+
+```bash
+ssh admin@<VM_IP> "sudo launchctl unload /Library/LaunchDaemons/com.clever-computer.github-proxy-forward.plist && sudo launchctl load /Library/LaunchDaemons/com.clever-computer.github-proxy-forward.plist"
+```
+
+**2. Check the proxy on the host:**
+
+```bash
+lsof -i :8443
+```
+
+If nothing is listening, start the proxy from `host/github-proxy/`.
+
+**3. Verify end-to-end:**
+
+```bash
+ssh admin@<VM_IP> "curl -sS --max-time 5 https://github.proxy/ -o /dev/null -w '%{http_code}'"
+```
+
+Should return `200`.
+
 ## Workflows and VM configs
 
 Configs
